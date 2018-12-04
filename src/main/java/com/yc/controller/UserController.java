@@ -3,6 +3,8 @@ package com.yc.controller;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,17 +18,21 @@ import com.yc.mapper.UserMapper;
 @RestController
 public class UserController {
 	
+	private static final Logger logger = LogManager.getLogger(UserController.class);
+	
 	@Autowired
 	private UserMapper userMapper;
 	
 	@RequestMapping("/")
 	public String index() {
+		logger.info("enter index api :welcome ");
 		return "welocome to unicorn system";
 	}
 	
 	@RequestMapping("/getUsers")
 	public List<UserEntity> getUsers() {
 		List<UserEntity> users=userMapper.getAll();
+		logger.info("enter getUsers api | userList Size :"+users.size());
 		return users;
 	}
 	
