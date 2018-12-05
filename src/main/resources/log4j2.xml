@@ -2,7 +2,7 @@
 <Configuration status="OFF" monitorInterval="30">
     <Properties>
         <Property name="LOG_PATTERN">
-            %d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${hostName} --- [%15.15t] %-40.40c{1.} : %m%n%ex
+            %d{yyyy-MM-dd HH:mm:ss.SSS} %5p --- [%15.15t] : %l : %m%n%ex
         </Property>
         <Property name="LOG_FILE_PATH">/Users/jeffrey_mao/Documents/logs</Property>
     </Properties>
