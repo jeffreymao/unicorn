@@ -4,7 +4,7 @@
         <Property name="LOG_PATTERN">
             %d{yyyy-MM-dd HH:mm:ss.SSS} %5p --- [%15.15t] : %l : %m%n%ex
         </Property>
-        <Property name="LOG_FILE_PATH">/Users/jeffrey_mao/Documents/logs</Property>
+        <Property name="LOG_FILE_PATH">/logs</Property>
     </Properties>
     <Appenders>
         <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
