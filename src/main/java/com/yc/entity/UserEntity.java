@@ -1,25 +1,45 @@
 package com.yc.entity;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+import org.springframework.data.annotation.Transient;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 
 public class UserEntity implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	private Long id;
 	private String userName;
+	@Transient
 	private String passWord;
-	private String userSex;
-	private String nickName;
+	private String phoneNum;
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private LocalDateTime ctime;
+	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private LocalDateTime utime;
 
 	public UserEntity() {
 		super();
 	}
 
-	public UserEntity(String userName, String passWord, String userSex) {
+	public UserEntity(String userName, String passWord) {
 		super();
 		this.passWord = passWord;
 		this.userName = userName;
-		this.userSex = userSex;
 	}
 
 	public Long getId() {
@@ -46,26 +66,34 @@ public class UserEntity implements Serializable {
 		this.passWord = passWord;
 	}
 
-	public String getUserSex() {
-		return userSex;
+	public String getPhoneNum() {
+		return phoneNum;
 	}
 
-	public void setUserSex(String userSex) {
-		this.userSex = userSex;
+	public void setPhoneNum(String phoneNum) {
+		this.phoneNum = phoneNum;
 	}
 
-	public String getNickName() {
-		return nickName;
+	public LocalDateTime getCtime() {
+		return ctime;
 	}
 
-	public void setNickName(String nickName) {
-		this.nickName = nickName;
+	public void setCtime(LocalDateTime ctime) {
+		this.ctime = ctime;
+	}
+
+	public LocalDateTime getUtime() {
+		return utime;
+	}
+
+	public void setUtime(LocalDateTime utime) {
+		this.utime = utime;
 	}
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
-		return "userName " + this.userName + ", pasword " + this.passWord + "sex " + userSex;
+		DateTimeFormatter ftf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		return "userName: " + this.userName + ", phoneNum: " + this.phoneNum +", uTime: "+this.utime.format(ftf);
 	}
 
 }

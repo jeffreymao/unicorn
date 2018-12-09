@@ -16,36 +16,25 @@ public interface UserMapper {
 	
 	@Select("SELECT * FROM users")
 	@Results({
-		@Result(property = "userName",  column = "userName"),
-		@Result(property = "userSex",  column = "user_sex"),
-		@Result(property = "nickName", column = "nick_name")
+		@Result(property = "userName",  column = "user_name"),
+		@Result(property = "phoneNum",  column = "phone_num"),
 	})
 	List<UserEntity> getAll();
 	
 	@Select("SELECT * FROM users WHERE id = #{id}")
 	@Results({
-		@Result(property = "userName",  column = "userName"),
-		@Result(property = "userSex",  column = "user_sex"),
-		@Result(property = "nickName", column = "nick_name")
+		@Result(property = "userName",  column = "user_name"),
+		@Result(property = "phoneNum",  column = "phone_num"),
 	})
 	UserEntity getOne(Long id);
 
-	@Insert("INSERT INTO users(userName,passWord,user_sex) VALUES(#{userName}, #{passWord}, #{userSex})")
+	@Insert("INSERT INTO users(user_name,pass_word,phone_num,ctime,utime) VALUES(#{userName}, #{passWord}, #{phoneNum},#{ctime},#{utime)")
 	void insert(UserEntity user);
 
-	@Update("UPDATE users SET userName=#{userName},nick_name=#{nickName} WHERE id =#{id}")
+	@Update("UPDATE users SET userName=#{userName} WHERE id =#{id}")
 	void update(UserEntity user);
 
 	@Delete("DELETE FROM users WHERE id =#{id}")
 	void delete(Long id);
-	
-	@Select("SELECT gpdm,zqjc FROM usrzqzb1 limit 100")
-	@Results({
-		@Result(property="gpdm",column="gpdm"),
-		@Result(property="zqjc",column="zqjc")
-	})
-	List<Map<String,String>> getAllCompanys();
-	
-	
 
 }
