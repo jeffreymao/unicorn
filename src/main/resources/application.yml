@@ -32,5 +32,10 @@ spring:
       time-to-live: 1h
       use-key-prefix: true
       key-prefix: spring.cache.key
+  session:
+    store-type: redis
+    redis:
+      flush-mode= on-save
+      namespace= spring:session
         
   
