@@ -15,6 +15,7 @@ import com.yc.utils.MyConstants;
 import com.yc.utils.MyUtils;
 
 @RestController
+@RequestMapping("/demo")
 public class DemoController {
 
 	private static final Logger logger = LogManager.getLogger(DemoController.class);
@@ -22,57 +23,83 @@ public class DemoController {
 	@Autowired
 	private DemoMapper demoMapper;
 	
-	@Autowired
-	private MyUtils myUtils;
-	
-	@Autowired
-	private MyConstants myConstants;
-	
-	@RequestMapping("/demo/getCompanyList")
+	@RequestMapping("/getCompanyList")
 	public Map<String,Object> getCompanyList(){
 		try {
 			List<Map<String,Object>> result = demoMapper.getCompanyList();
-			return myUtils.getRetMsg(myConstants.RET_CODE_SUCCESS, "成功", result);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SUCCESS, "成功", result);
 		}catch(Exception e) {
 			logger.error(e);
-			return myUtils.getRetMsg(myConstants.RET_CODE_SYSERROR, "系统异常", null);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SYSERROR, "系统异常", null);
 		}
 	}
 	
-	@RequestMapping("/demo/getCompanyProducts")
+	@RequestMapping("/getCompanyProducts")
 	public Map<String,Object> getCompanyProducts(@RequestParam(value="coCode",defaultValue="") String coCode){
 		try {
 			List<Map<String,Object>> result = demoMapper.getCompanyProducts(coCode);
-			return myUtils.getRetMsg(myConstants.RET_CODE_SUCCESS, "成功", result);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SUCCESS, "成功", result);
 		}catch(Exception e) {
 			logger.error(e);
-			return myUtils.getRetMsg(myConstants.RET_CODE_SYSERROR, "系统异常", null);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SYSERROR, "系统异常", null);
 		}
 	}
 	
-	@RequestMapping("/demo/getProductSeries")
+	@RequestMapping("/getProductSeries")
 	public Map<String,Object> getProductSeries(@RequestParam(value="coCode",defaultValue="") String coCode,
 			@RequestParam(value="productCode",defaultValue="") String productCode){
 		try{
 			List<Map<String,Object>> result = demoMapper.getProductSeries(productCode, coCode);
-			return myUtils.getRetMsg(myConstants.RET_CODE_SUCCESS, "成功", result);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SUCCESS, "成功", result);
 		}catch(Exception e) {
 			logger.error(e);
-			return myUtils.getRetMsg(myConstants.RET_CODE_SYSERROR, "系统异常", null);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SYSERROR, "系统异常", null);
 		}
 		
 	}
 	
-	@RequestMapping("/demo/getSeriesData")
+	@RequestMapping("/getSeriesData")
 	public Map<String,Object> getSeriesData(@RequestParam(value="seriesCode",defaultValue="") String seriesCode){
 		try {
 			List<Map<String,Object>> result = demoMapper.getSeriesData(seriesCode);
-			return myUtils.getRetMsg(myConstants.RET_CODE_SUCCESS, "成功", result);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SUCCESS, "成功", result);
 		}catch(Exception e) {
 			logger.error(e);
-			return myUtils.getRetMsg(myConstants.RET_CODE_SYSERROR, "系统异常", null);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SYSERROR, "系统异常", null);
 		}
-		
+	}
+	
+	@RequestMapping("/getProductChain")
+	public Map<String,Object> getProductChain(@RequestParam(value="productCode",defaultValue="") String productCode){
+		try {
+			List<Map<String,Object>> result = demoMapper.getProductChain(productCode);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SUCCESS, "成功", result);
+		}catch(Exception e) {
+			logger.error(e);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SYSERROR, "系统异常", null);
+		}
+	}
+	
+	@RequestMapping("/getCompanysByProduct")
+	public Map<String,Object> getCompanysByProduct(@RequestParam(value="productCode",defaultValue="") String productCode){
+		try {
+			List<Map<String,Object>> result = demoMapper.getCompanysByProduct(productCode);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SUCCESS, "成功", result);
+		}catch(Exception e) {
+			logger.error(e);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SYSERROR, "系统异常", null);
+		}
+	}
+	
+	@RequestMapping("/getCoreProducts")
+	public Map<String,Object> getCoreProducts(){
+		try {
+			List<Map<String,Object>> result = demoMapper.getCoreProducts();
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SUCCESS, "成功", result);
+		}catch(Exception e) {
+			logger.error(e);
+			return MyUtils.getRetMsg(MyConstants.RET_CODE_SYSERROR, "系统异常", null);
+		}
 	}
 	
 }

@@ -48,9 +48,39 @@ public interface DemoMapper {
 			"where sd.series_code = #{seriesCode}\n" + 
 			"order by sd.data_time")
 	@Results({
-		@Result(property = "dataTime",  column = "data_time"),
-		@Result(property = "dataValue",  column = "data_value"),
+		@Result(property = "seriesDataTime",  column = "data_time"),
+		@Result(property = "seriesDataValue",  column = "data_value"),
 	})
 	List<Map<String,Object>> getSeriesData(String seriesCode);
+	
+	@Select("select pc.father_code,pc.son_code\n" + 
+			"from product_chain pc\n" + 
+			"where pc.id_state = 1 and pc.product_code = #{productCode}")
+	@Results({
+		@Result(property = "productFatherCode",  column = "father_code"),
+		@Result(property = "productSonCode",  column = "son_code"),
+	})
+	List<Map<String,Object>> getProductChain(String productCode);
+	
+	@Select("select distinct ca.co_code ,ca.co_name\n" + 
+			"from company_attribute ca,company_product_series cps\n" + 
+			"where cps.id_state = 1 and ca.id_state = 1 and ca.co_code = cps.co_code\n" + 
+			"and cps.product_code = #{productCode}")
+	@Results({
+		@Result(property = "coCode",  column = "co_code"),
+		@Result(property = "coName",  column = "co_name"),
+	})
+	List<Map<String,Object>> getCompanysByProduct(String productCode);
+	
+	@Select("select distinct pa.product_code, pa.product_name\n" + 
+			"from product_chain pc , product_attribute pa\n" + 
+			"where pc.id_state = 1 and pa.id_state = 1\n" + 
+			"and pc.product_code = pa.product_code")
+	@Results({
+		@Result(property = "productCode",  column = "product_code"),
+		@Result(property = "productName",  column = "product_name"),
+	})
+	List<Map<String,Object>> getCoreProducts();
+	
 	
 }
