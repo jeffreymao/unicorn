@@ -1,0 +1,439 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>产品链图谱生成器</title>
+    <script src="../scripts/echarts-all-3.js"></script>
+    <script src="../scripts/jquery-3.2.1.min.js"></script>
+    <link href="../scripts/Aqua/css/ligerui-all.css" rel="stylesheet" />
+    <link href="../scripts/Gray2014/css/all.css" rel="stylesheet" />
+    <script src="../scripts/ligerui.min.js"></script>
+    <link type="image/x-icon" href="../images/favcion.ico" rel="icon" />
+    <style type="text/css">
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        #main {
+            width: 85%;
+            height: 100%;
+            float: right;
+        }
+
+        #left {
+            width: calc(15% - 7px);
+            border-right: 1px dashed #ccc;
+            height: 100%;
+            float: left;
+        }
+
+        #main, #left {
+            /*border-bottom: 1px dashed #ccc;
+            border-top: 1px dashed #ccc;*/
+            padding-top: 3px;
+            /*padding-left: 3px;*/
+        }
+
+        .btnClass {
+            width: calc(50% - 3px);
+            height: 25px;
+            margin-top: 3px;
+            cursor: pointer;
+        }
+
+        #txtKey {
+            height: 20px;
+            line-height: 20px;
+            width: calc(100% - 6px);
+        }
+
+        #loding {
+            position: absolute;
+            left: calc(15% - 7px + 35%);
+            top: 35%;
+            display: none;
+        }
+
+        #menu {
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #container {
+            height: 600px;
+            overflow: hidden;
+            /*padding-top: 3px;*/
+            padding-left: 3px;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        #comp {
+            position: absolute;
+            height: 250px;
+            width: 200px;
+            left: calc(15% + 3px);
+            bottom: -5px;
+            z-index: 999;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="left">
+            <input type="text" id="txtKey" />
+            <input type="button" id="btnSearch" class="btnClass" value="查询" />
+            <input type="button" id="btnClear" class="btnClass" value="清空" />
+            <input type="button" id="btnPrev" class="btnClass" value="← 上一个" />
+            <input type="button" id="btnNext" class="btnClass" value="下一个 →" />
+            <div id="menu" class="noselect" unselectable="on"></div>
+        </div>
+        <div id="comp" class="noselect" unselectable="on"></div>
+        <div id="main"></div>
+    </div>
+    <script type="text/javascript">
+        var myChart;
+        var menuCol = [{ display: '代码', name: 'cldm', align: 'center', width: '35%' },
+                       { display: '名称', name: 'clmc', align: 'center', width: '58%' }];
+        var compCol = [{ display: '公司代码', name: 'dm', align: 'center', width: '35%' },
+               { display: '公司名称', name: 'mc', align: 'center', width: '65%' }];
+        var jsonData = [];
+        var compJsonData = [];
+        var myGrid;
+        var compGrid;
+        var currIndex = -1;
+        var currKey = { text: "", id: "" };
+        var maxLevel = 0;
+
+        window.onresize = function () {
+            heightSetting();
+            myChart.resize();
+        }
+
+        $(function () {
+            heightSetting();
+            myChart = echarts.init(document.getElementById('main'));
+            initMenu();
+
+            $("#btnSearch").click(function () {
+                keyCheck();
+            });
+
+            $("#txtKey").keydown(function (e) {
+                if (e.which == 13) {
+                    keyCheck();
+                }
+            });
+
+            $("#btnClear").click(function () {
+                myChart.clear();
+            });
+
+            $("#btnPrev").click(function () {
+                if (myGrid == null || currIndex <= 0)
+                    return;
+
+                selectRow(--currIndex);
+            });
+
+            $("#btnNext").click(function () {
+                if (myGrid == null || currIndex == -1 || currIndex >= jsonData.Rows.length)
+                    return;
+
+                selectRow(++currIndex);
+            });
+
+            myChart.on('click', function (params) {   //此处统一改成节点单击跳转
+                myChart.showLoading();
+                var ajaxData = { "clmc": params.data.name };
+                currKey.id = "";
+                currKey.text = params.data.name;
+                //if (params.data.value != 1) {
+                $.ajax({
+                    url: "../service/DataService.asmx/GetNewProdChainStr",
+                    type: "post",
+                    asnyc: false,
+                    data: JSON.stringify(ajaxData),
+                    dataType: "json",
+                    contentType: "application/json",
+                    success: function (result) {
+                        if (result.d != null && result.d != "-1") {
+                            $("#comp").hide();
+                            var datas = result.d.split("@@splitor@@");
+                            maxLevel = datas[2];
+                            resetData(JSON.parse(datas[0]), JSON.parse(datas[1]), false);
+                        } else {
+                            alert("数据库链接失败！请检查网络环境！");
+                        }
+                        myChart.hideLoading();
+                    }
+                });
+                //}
+            });
+
+        });
+
+        var heightSetting = function () {
+            $("#container").height(document.documentElement.clientHeight - 5);
+        }
+
+        var keyCheck = function () {
+            var flag = false;
+            for (var i = 0; i < jsonData.Rows.length; i++) {
+                if (jsonData.Rows[i].clmc == $("#txtKey").val().trim() ||
+                    jsonData.Rows[i].cldm == $("#txtKey").val().trim()) {
+                    selectRow(i);
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag)
+                alert("未找到的关键字！关键字可以是代码或者名称，必须完整输入。");
+        }
+
+        var selectRow = function (i) {
+            var row = myGrid.getRow(i);
+            myGrid.select(row);
+            currKey.id = row["cldm"];
+            currKey.text = row["clmc"];
+            loadData();
+            $(".l-grid-body2").animate({ scrollTop: (i >= 2 ? (i - 2) * 29 : 0) }, "fast");
+            currIndex = i;
+        }
+
+        var initMenu = function () {
+            compGrid = $("#comp").ligerGrid({
+                height: "240px", width: "200px",
+                columns: compCol, data: $.extend(true, {}, compJsonData), enabledSort: false,
+                pageSize: 50, isScroll: true
+            });
+
+            $.ajax({
+                url: "../service/DataService.asmx/GetAllNames",
+                type: "post",
+                asnyc: false,
+                data: "{}",
+                dataType: "json",
+                contentType: "application/json",
+                success: function (result) {
+                    if (result.d != null && result.d != "-1") {
+                        jsonData = JSON.parse(result.d);
+                        myGrid = $("#menu").ligerGrid({
+                            height: "99%", width: "98%",
+                            columns: menuCol, data: $.extend(true, {}, jsonData), enabledSort: false,
+                            pageSize: 2000, isScroll: true, onSelectRow: rowsingleclick
+                                                                                  //by gjf 此处将grid双击改成选中切换
+                        });
+                        //判断是否点击跳转
+                        if (sessionStorage.getItem("goodname") != null && sessionStorage.getItem("goodname").length > 0) {
+                            $("#txtKey").val(sessionStorage.getItem("goodname"));
+                            sessionStorage.clear();
+                            keyCheck();
+                        }
+                    } else {
+                        alert("数据库链接失败！请检查网络环境！");
+                    }
+                }
+            });
+        }
+
+        var rowsingleclick = function (row, item, content) {
+            currIndex = row["__index"];
+            currKey.id = row["cldm"];
+            currKey.text = row["clmc"];
+            $("#comp").show();
+            loadData();
+        }
+
+        var loadData = function () {
+            myChart.showLoading();
+            var jsonData = { "key": currKey.id };
+            $.ajax({
+                url: "../service/DataService.asmx/GetLinks",
+                type: "post",
+                asnyc: false,
+                data: JSON.stringify(jsonData),
+                dataType: "json",
+                contentType: "application/json",
+                success: function (result) {
+                    if (result.d != null && result.d != "-1") {
+                        var datas = result.d.split("@@splitor@@");
+                        maxLevel = datas[2];
+                        resetData(JSON.parse(datas[0]), JSON.parse(datas[1]),true);
+                        $.ligerDialog.tip({ title: '提示信息', content: '单击节点展开详细产业链。' });
+                        setTimeout(function () {
+                            $(".l-dialog-close").trigger("click");
+                        }, 3000);
+                    } else {
+                        alert("数据库链接失败！请检查网络环境！");
+                    }
+                }
+            });
+        }
+
+        var getLevelObject = function (type) {
+            var object = [];
+            if (type == 1)  //categories必须从0开始，不影响数据结果
+                object.push("第0层");
+
+            for (var i = 1; i <= maxLevel; i++) {
+                object.push(type == 0 ? ("第" + i + "层") : ({ name: "第" + i + "层" }));
+            }
+            return object;
+        }
+
+        var resetData = function (vdata, vlinks,showLege) {
+            var option = {
+                backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
+                    offset: 0,
+                    color: '#f7f8fa'
+                }, {
+                    offset: 1,
+                    color: '#cdd0d5'
+                }]),
+                title: {
+                    text: currKey.text,
+                    textStyle: {
+                        fontSize: 20,
+                        color: "#2F4554",
+                    },
+                },
+                tooltip: {},
+                animationDurationUpdate: 1500,
+                animationEasingUpdate: 'linear',
+                legend: {
+                    x: "center",
+                    show: showLege,
+                    data: getLevelObject(0)
+                },
+                toolbox: {
+                    show: true,
+                    feature: {
+                        //dataView: { show: true, readOnly: true },
+                        restore: { show: true },
+                        saveAsImage: { show: true }
+                    }
+                },
+                series: [
+                    {
+                        type: 'graph',
+                        layout: 'force',
+                        symbolSize: function (value, size) {
+                            return 60;
+                        },
+                        focusNodeAdjacency: true,
+                        roam: true,
+                        categories: getLevelObject(1),
+                        color: ['#F880C7', '#FF7E3A', '#F3E625', '#9FDA6C', '#697ED1', '#64B2C9', '#C4A6E4', '#65C995'],
+                        label: {
+                            normal: {
+                                show: true,
+                                textStyle: {
+                                    fontSize: 13,
+                                    //color: "#fff"
+                                    color: "black"
+                                },
+                                formatter: function (para) {
+                                    if (para.value == 1)
+                                        return '{primarykey|' + para.name + '}';
+                                    return '{ordinary|' + para.name + '}';
+                                },
+                                rich: {
+                                    ordinary: {
+                                        fontSize: 12,
+                                        color: "black"
+                                        //color: '#fff'
+                                    },
+                                    primarykey: {
+                                        fontSize: 15,
+                                        fontWeight: 'bold',
+                                        //color:'red'
+                                        color: '#C82B34'
+                                    }
+                                }
+                            }
+                        },
+                        force: {
+                            repulsion: 2000
+                        },
+                        tooltip: {
+                            formatter: function (node) { // 区分连线和节点，节点上额外显示其他数字
+                                if (!node.value) {
+                                    return node.data.name;
+                                } else {
+                                    return node.data.name + (node.data.showNum == null ? "" : (":" + node.data.showNum));
+                                }
+                            },
+                        },
+                        lineStyle: {
+                            normal: {
+                                opacity: 1,
+                                width: 0.7,
+                                curveness: 0
+                            }
+                        },
+                        data: vdata,
+                        links: vlinks
+
+                    }
+                ]
+            };
+            myChart.setOption(option);
+            myChart.hideLoading();
+            reloadComp();
+        }
+
+        var textLine = function (text, rowbytes) {
+            var textNew = "";
+            var num = 1;
+            for (var i = 0; i < text.length; i++) {
+                textNew += text[i];
+                if (rowbytes == num) {
+                    textNew += "\n";
+                    num = 1;
+                } else
+                    num++;
+            }
+            return textNew;
+        }
+
+        var reloadComp = function () {
+            var jsonData = { "key": currKey.id };
+            $.ajax({
+                url: "../service/DataService.asmx/GetCompanyStr",
+                type: "post",
+                asnyc: false,
+                data: JSON.stringify(jsonData),
+                dataType: "json",
+                contentType: "application/json",
+                success: function (result) {
+                    if (result.d != null && result.d != "-1") {
+                        compJsonData = JSON.parse(result.d);
+                        compGrid = $("#comp").ligerGrid({
+                            height: "240px", width: "200px",
+                            columns: compCol, data: $.extend(true, {}, compJsonData), enabledSort: false,
+                            pageSize: 50, isScroll: true, onSelectRow: openComp
+                        });
+                    } else {
+                        alert("数据库链接失败！请检查网络环境！");
+                    }
+                }
+            });
+        }
+
+        var openComp = function (r, x, d) {
+            sessionStorage.setItem("compname", r.mc);
+            window.open("CompanyProductChart.html");
+        }
+    </script>
+</body>
+</html>
