@@ -226,7 +226,7 @@
             });
 
             $("#btnNext").click(function () {
-                if (myGrid == null || currIndex == -1 || currIndex >= jsonData.Rows.length)
+                if (myGrid == null || currIndex == -1 || currIndex >= jsonData.length)
                     return;
 
                 selectRow(++currIndex);
@@ -302,9 +302,9 @@
 
         var keyCheck = function () {
             var flag = false;
-            for (var i = 0; i < jsonData.Rows.length; i++) {
-                if (jsonData.Rows[i].gpdm == $("#txtKey").val().trim() ||
-                    jsonData.Rows[i].zqjc.replace(/\s/g, "") == $("#txtKey").val().trim().replace(/\s/g, "")) {
+            for (var i = 0; i < jsonData.length; i++) {
+                if (jsonData[i].securityCode == $("#txtKey").val().trim() ||
+                    jsonData[i].securityName.replace(/\s/g, "") == $("#txtKey").val().trim().replace(/\s/g, "")) {
                     selectRow(i);
                     flag = true;
                     break;
@@ -317,8 +317,8 @@
         var selectRow = function (i) {
             var row = myGrid.getRow(i);
             myGrid.select(row);
-            currKey.id = row["gpdm"];
-            currKey.text = row["zqjc"];
+            currKey.id = row["coCode"];
+            currKey.text = row["securityName"];
             loadData();
             $(".l-grid-body2").animate({ scrollTop: (i >= 2 ? (i - 2) * 29 : 0) }, "fast");
             currIndex = i;
@@ -334,8 +334,9 @@
                 contentType: "application/json",
                 success: function (result) {
                     if (result != null) {
-                        jsonData = JSON.parse(result);
-                        if(jsonData.retCode=="000"){
+                        retData = JSON.parse(result);
+                        if(retData.retCode=="000"){
+                        	jsonData = retData.data;
                         	myGrid = $("#menu").ligerGrid({
                                 height: "99%", width: "98%",
                                 columns: menuCol, data: $.extend(true, {}, jsonData), enabledSort: false,
@@ -359,9 +360,9 @@
 
         var rowclick = function (row, item, content) {
             currIndex = row["__index"];
-            currKey.id = row["gpdm"];
-            currKey.text = row["zqjc"];
-            $("#txtKey").val(row["zqjc"]);
+            currKey.id = row["coCode"];
+            currKey.text = row["securityName"];
+            $("#txtKey").val(row["securityName"]);
             loadData();
         }
 
@@ -370,19 +371,22 @@
             $("#barbox").hide();
             $("#items .l-grid-hd-cell-inner").html("指标项");
             myChart.showLoading();
-            var dataPara = { "key": currKey.text };
+            var dataPara = { "coCode": currKey.id };
             $.ajax({
-                url: "../service/DataService.asmx/GetCompanyProductStr",
+                url: "../demo/getCompanyProducts",
                 type: "post",
                 asnyc: false,
                 data: JSON.stringify(dataPara),
                 dataType: "json",
                 contentType: "application/json",
                 success: function (result) {
-                    if (result.d != null && result.d != "-1") {
-                        var datas = result.d.split("@@splitor@@");
-                        resetData(JSON.parse(datas[0]), JSON.parse(datas[1]),
-                            JSON.parse(datas[2]), JSON.parse(datas[3]));
+                    if (result != null) {
+                    	retData = JSON.parse(result);
+                    	if(retData.retCode=="000"){
+                            resetData(retData.data);
+                    	}else{
+                    		alert("接口数据异常");
+                    	}
                     } else {
                         alert("数据库链接失败！请检查网络环境！");
                     }
@@ -390,7 +394,24 @@
             });
         }
 
-        var resetData = function (vdata, vlinks, vlege, vcate) {
+        var resetData = function (productList) {
+        	var vdata = []; 
+        	vdata.push({"name":currKey.text,"symbolSize":"50","value":"1","draggable":"true",
+        		"itemStyle":{"normal":{"color":"#69079A"}}});
+        	var vlinks = [];
+        	var vlege =[];
+        	var vcate = [];
+        	for(var i = 0;i<productList.length;i++){
+        		var product = productList[i];
+        		var data = {"name":product.productName,"symbolSize":"25","value":"2","draggable":"true","category":product.productName};
+        		vdata.push(data);
+        		var link={"source":currKey.text,"target":product.productName,"symbol":[],"symbolSize":0};
+        		vlinks.push(link);
+        		vlege.push(product.productName);
+        		var cate = {"name":product.productName};
+        		vcate.push(cate);
+        	}
+        	
             option = {
                 backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
                     offset: 0,
@@ -400,17 +421,14 @@
                     color: '#cdd0d5'
                 }]),
                 title: {
-                    text: currKey.id + " " + currKey.text,
+                    text: currKey.text,
                     //subtext: "",
                     top: "top",
                     left: "center"
                 },
                 tooltip: {
                     formatter: function (para) {
-                        if (para.data.value == "1") {
-                            return para.name+"("+currKey.id+")" + "<br/>" + "<dl><dt>昨日行情<dt><dd>收盘价：" + para.data.spj + "<dd><dl>";
-                        } else
-                            return para.name;
+                        return para.name;
                     }
                 },
                 legend: [{
