@@ -186,13 +186,14 @@
         var menuCol = [{ display: '公司代码', name: 'securityCode', align: 'center', width: '35%' },
                        { display: '公司名称', name: 'securityName', align: 'center', width: '58%' }];
         var itemsCol = [{ display: '指标项', name: 'seriesName', align: 'center', width: '100%' }];
-        var jsonData = [];
+        var jsonData = {};
         var itemsData = [];
         var myGrid;
         var itemsGrid;
         var currIndex = -1;
         var currKey = { text: "", id: "" };
-        var currGodd = "";
+        var currProCode = "";
+        var currProName = "";
 
         window.onresize = function () {
             heightSetting();
@@ -226,7 +227,7 @@
             });
 
             $("#btnNext").click(function () {
-                if (myGrid == null || currIndex == -1 || currIndex >= jsonData.length)
+                if (myGrid == null || currIndex == -1 || currIndex >= jsonData.Rows.length)
                     return;
 
                 selectRow(++currIndex);
@@ -259,13 +260,14 @@
             //});
             myChart.on('click', function (params) {
                 if (params.data.value == 2) {
-                    if (currGodd != params.data.name) //第一次点击
+                    if (currProCode != params.data.code) //第一次点击
                     {
                         if ($("#itembox img").attr("src").indexOf("right") >= 0) {
                             $("#itembox").css({ "left": "calc(15% + 3px)" });
                             setTimeout(function () { $("#itembox img").attr("src", "../images/left.png"); }, 500);
                         }
-                        currGodd = params.data.name;
+                        currProCode = params.data.code;
+                        currProName = params.data.name;
                         reloaditems();
                     } else {                        //大于第一次点击
                         sessionStorage.setItem("goodname", params.data.name);
@@ -279,7 +281,7 @@
                 width: "300px",
                 columns: itemsCol, data: $.extend(true, {}, itemsData), enabledSort: false,
                 pageSize: 10, isScroll: true
-            });
+           });
 
             $("#changeType").click(function () {
                 if (barLoading)
@@ -302,9 +304,9 @@
 
         var keyCheck = function () {
             var flag = false;
-            for (var i = 0; i < jsonData.length; i++) {
-                if (jsonData[i].securityCode == $("#txtKey").val().trim() ||
-                    jsonData[i].securityName.replace(/\s/g, "") == $("#txtKey").val().trim().replace(/\s/g, "")) {
+            for (var i = 0; i < jsonData.Rows.length; i++) {
+                if (jsonData.Rows[i].securityCode == $("#txtKey").val().trim() ||
+                	jsonData.Rows[i].securityName.replace(/\s/g, "") == $("#txtKey").val().trim().replace(/\s/g, "")) {
                     selectRow(i);
                     flag = true;
                     break;
@@ -329,17 +331,14 @@
                 url: "../demo/getCompanyList",
                 type: "post",
                 asnyc: false,
-                data: "{}",
                 dataType: "json",
-                contentType: "application/json",
                 success: function (result) {
                     if (result != null) {
-                        retData = JSON.parse(result);
-                        if(retData.retCode=="000"){
-                        	jsonData = retData.data;
+                        if(result.retCode=="000"){
+                        	jsonData.Rows = result.data;
                         	myGrid = $("#menu").ligerGrid({
                                 height: "99%", width: "98%",
-                                columns: menuCol, data: $.extend(true, {}, jsonData), enabledSort: false,
+                                columns: menuCol, data: jsonData, enabledSort: false,
                                 pageSize: 2000, isScroll: true, onSelectRow: rowclick //onDblClickRow: rowdbclick
                                                                                     //by gjf 此处将grid双击改成选中切换
                             });
@@ -376,14 +375,12 @@
                 url: "../demo/getCompanyProducts",
                 type: "post",
                 asnyc: false,
-                data: JSON.stringify(dataPara),
+                data: dataPara,
                 dataType: "json",
-                contentType: "application/json",
                 success: function (result) {
                     if (result != null) {
-                    	retData = JSON.parse(result);
-                    	if(retData.retCode=="000"){
-                            resetData(retData.data);
+                    	if(result.retCode=="000"){
+                            resetData(result.data);
                     	}else{
                     		alert("接口数据异常");
                     	}
@@ -396,14 +393,14 @@
 
         var resetData = function (productList) {
         	var vdata = []; 
-        	vdata.push({"name":currKey.text,"symbolSize":"50","value":"1","draggable":"true",
+        	vdata.push({"name":currKey.text,"code":currKey.id,"symbolSize":"50","value":"1","draggable":"true",
         		"itemStyle":{"normal":{"color":"#69079A"}}});
         	var vlinks = [];
         	var vlege =[];
         	var vcate = [];
         	for(var i = 0;i<productList.length;i++){
         		var product = productList[i];
-        		var data = {"name":product.productName,"symbolSize":"25","value":"2","draggable":"true","category":product.productName};
+        		var data = {"name":product.productName,"code":product.productCode,"symbolSize":"25","value":"2","draggable":"true","category":product.productName};
         		vdata.push(data);
         		var link={"source":currKey.text,"target":product.productName,"symbol":[],"symbolSize":0};
         		vlinks.push(link);
@@ -501,24 +498,28 @@
         var reloaditems = function () {
             if (itemsGrid != null)
                 itemsGrid.toggleLoading(true);
-            var dataPara = { "gname": currGodd, "cname": currKey.text };
-            itemsCol[0].display = currGodd;
+            var dataPara = { "productCode": currProCode, "coCode": currKey.id };
+            itemsCol[0].display = currProName;
             $.ajax({
-                url: "../service/DataService.asmx/GetGoodImtesStr",
+                url: "../demo/getProductSeries",
                 type: "post",
                 asnyc: false,
-                data: JSON.stringify(dataPara),
+                data: dataPara,
                 dataType: "json",
-                contentType: "application/json",
                 success: function (result) {
-                    if (result.d != null && result.d != "-1") {
-                        itemsData = JSON.parse(result.d);
-                        itemsGrid = $("#items").ligerGrid({
-                            width: "300px",
-                            columns: itemsCol, data: $.extend(true, {}, itemsData), enabledSort: false,
-                            pageSize: 10, isScroll: true, onSelectRow: itemSelected
-                        });
-                        itemsGrid.toggleLoading(false);
+                    if (result != null) {
+                    	if(result.retCode=="000"){
+                    		var gridData = {};
+                    		gridData.Rows =result.data;
+                            itemsGrid = $("#items").ligerGrid({
+                                width: "300px",
+                                columns: itemsCol, data: gridData, enabledSort: false,
+                                pageSize: 10, isScroll: true, onSelectRow: itemSelected
+                            });
+                            itemsGrid.toggleLoading(false);
+                    	}else{
+                    		alert("后台服务异常");
+                    	} 
                     } else {
                         alert("数据库链接失败！请检查网络环境！");
                     }
@@ -534,33 +535,44 @@
                 return;
 
             //直接读取缓存
-            if (isInBarCache(rd.zbdm)) {
+            if (isInBarCache(rd.seriesCode)) {
                 reloadBar();
                 return;
             }
 
-            barData.id = rd.zbdm;
-            barData.name = rd.zbmc;
-            var dataPara = { "code": rd.zbdm };
+            barData.id = rd.seriesCode;
+            barData.name = rd.seriesName;
+            var dataPara = { "seriesCode": rd.seriesCode};
             barboxLoading(true);
             $.ajax({
-                url: "../service/DataService.asmx/GetItemBarStr",
+                url: "../demo/getSeriesData",
                 type: "post",
                 asnyc: false,
-                data: JSON.stringify(dataPara),
+                data: dataPara,
                 dataType: "json",
-                contentType: "application/json",
                 success: function (result) {
-                    if (result.d != null && result.d != "-1") {
-                        var datas = result.d.split("@@splitor@@");
-                        barData.xaxis = JSON.parse(datas[0]);
-                        barData.ydata = JSON.parse(datas[1]);
-                        barCache.push({
-                            "id": barData.id, "data": {
-                                xaxis: barData.xaxis, ydata: barData.ydata, name: barData.name, id: barData.id
-                            }
-                        });
-                        reloadBar();
+                    if (result != null) {
+                    	if(result.retCode=="000"){
+                    		 var datas = result.data;
+                    		 var xList =[];
+                    		 var yList =[];
+                    		 for(var i=0 ;i<datas.length;i++){
+                    			 var seriesData = datas[i];
+                    			 xList.push(seriesData.seriesDataTime);
+                    			 var tdata = [seriesData.seriesDataTime,seriesData.seriesDataValue];
+                    			 yList.push(tdata);
+                    		 }
+                             barData.xaxis = xList;
+                             barData.ydata = yList;
+                             barCache.push({
+                                 "id": barData.id, "data": {
+                                     xaxis: barData.xaxis, ydata: barData.ydata, name: barData.name, id: barData.id
+                                 }
+                             });
+                             reloadBar();
+                    	}else{
+                    		alert("后台服务异常");
+                    	}
                     } else {
                         alert("数据库链接失败！请检查网络环境！");
                     }
@@ -618,7 +630,7 @@
                     }],
                     exporting: {
                         allowHTML: true,
-                        filename: currKey.text + "__" + currGodd + "__" + barData.name,
+                        filename: currKey.text + "__" + currProName + "__" + barData.name,
                         buttons: {
                             contextButton: {
                                 verticalAlign: 'bottom',

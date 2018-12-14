@@ -102,17 +102,17 @@
     </div>
     <script type="text/javascript">
         var myChart;
-        var menuCol = [{ display: '代码', name: 'cldm', align: 'center', width: '35%' },
-                       { display: '名称', name: 'clmc', align: 'center', width: '58%' }];
-        var compCol = [{ display: '公司代码', name: 'dm', align: 'center', width: '35%' },
-               { display: '公司名称', name: 'mc', align: 'center', width: '65%' }];
-        var jsonData = [];
-        var compJsonData = [];
+        var menuCol = [{ display: '代码', name: 'productCode', align: 'center', width: '35%' },
+                       { display: '名称', name: 'productName', align: 'center', width: '58%' }];
+        var compCol = [{ display: '公司代码', name: 'securityCode', align: 'center', width: '35%' },
+               { display: '公司名称', name: 'securityName', align: 'center', width: '65%' }];
+        var jsonData = {};
+        var compJsonData = {};
         var myGrid;
         var compGrid;
         var currIndex = -1;
         var currKey = { text: "", id: "" };
-        var maxLevel = 0;
+        var maxLevel = 1;
 
         window.onresize = function () {
             heightSetting();
@@ -154,23 +154,20 @@
 
             myChart.on('click', function (params) {   //此处统一改成节点单击跳转
                 myChart.showLoading();
-                var ajaxData = { "clmc": params.data.name };
+                var ajaxPara = { "productCode": params.data.code };
                 currKey.id = "";
                 currKey.text = params.data.name;
                 //if (params.data.value != 1) {
                 $.ajax({
-                    url: "../service/DataService.asmx/GetNewProdChainStr",
+                    url: "../demo/getProductChain",
                     type: "post",
                     asnyc: false,
-                    data: JSON.stringify(ajaxData),
+                    data: ajaxPara,
                     dataType: "json",
-                    contentType: "application/json",
                     success: function (result) {
-                        if (result.d != null && result.d != "-1") {
+                        if (result != null && result.retCode=="000") {
                             $("#comp").hide();
-                            var datas = result.d.split("@@splitor@@");
-                            maxLevel = datas[2];
-                            resetData(JSON.parse(datas[0]), JSON.parse(datas[1]), false);
+                            resetData(result.data);
                         } else {
                             alert("数据库链接失败！请检查网络环境！");
                         }
@@ -189,8 +186,8 @@
         var keyCheck = function () {
             var flag = false;
             for (var i = 0; i < jsonData.Rows.length; i++) {
-                if (jsonData.Rows[i].clmc == $("#txtKey").val().trim() ||
-                    jsonData.Rows[i].cldm == $("#txtKey").val().trim()) {
+                if (jsonData.Rows[i].productCode == $("#txtKey").val().trim() ||
+                    jsonData.Rows[i].productName == $("#txtKey").val().trim()) {
                     selectRow(i);
                     flag = true;
                     break;
@@ -203,33 +200,32 @@
         var selectRow = function (i) {
             var row = myGrid.getRow(i);
             myGrid.select(row);
-            currKey.id = row["cldm"];
-            currKey.text = row["clmc"];
+            currKey.id = row["productCode"];
+            currKey.text = row["productName"];
             loadData();
             $(".l-grid-body2").animate({ scrollTop: (i >= 2 ? (i - 2) * 29 : 0) }, "fast");
             currIndex = i;
         }
 
         var initMenu = function () {
+        	compJsonData.Rows=[];
             compGrid = $("#comp").ligerGrid({
                 height: "240px", width: "200px",
-                columns: compCol, data: $.extend(true, {}, compJsonData), enabledSort: false,
+                columns: compCol, data:compJsonData, enabledSort: false,
                 pageSize: 50, isScroll: true
             });
 
             $.ajax({
-                url: "../service/DataService.asmx/GetAllNames",
+                url: "../demo/getCoreProducts",
                 type: "post",
                 asnyc: false,
-                data: "{}",
                 dataType: "json",
-                contentType: "application/json",
                 success: function (result) {
-                    if (result.d != null && result.d != "-1") {
-                        jsonData = JSON.parse(result.d);
+                    if (result!= null && result.retCode=="000") {
+                        jsonData.Rows = result.data;
                         myGrid = $("#menu").ligerGrid({
                             height: "99%", width: "98%",
-                            columns: menuCol, data: $.extend(true, {}, jsonData), enabledSort: false,
+                            columns: menuCol, data:jsonData, enabledSort: false,
                             pageSize: 2000, isScroll: true, onSelectRow: rowsingleclick
                                                                                   //by gjf 此处将grid双击改成选中切换
                         });
@@ -248,27 +244,24 @@
 
         var rowsingleclick = function (row, item, content) {
             currIndex = row["__index"];
-            currKey.id = row["cldm"];
-            currKey.text = row["clmc"];
+            currKey.id = row["productCode"];
+            currKey.text = row["productName"];
             $("#comp").show();
             loadData();
         }
 
         var loadData = function () {
             myChart.showLoading();
-            var jsonData = { "key": currKey.id };
+            var jsonPara = { "productCode": currKey.id };
             $.ajax({
-                url: "../service/DataService.asmx/GetLinks",
+                url: "../demo/getProductChain",
                 type: "post",
                 asnyc: false,
-                data: JSON.stringify(jsonData),
+                data: jsonPara,
                 dataType: "json",
-                contentType: "application/json",
                 success: function (result) {
-                    if (result.d != null && result.d != "-1") {
-                        var datas = result.d.split("@@splitor@@");
-                        maxLevel = datas[2];
-                        resetData(JSON.parse(datas[0]), JSON.parse(datas[1]),true);
+                    if (result != null && result.retCode =="000") {
+                        resetData(result.data);
                         $.ligerDialog.tip({ title: '提示信息', content: '单击节点展开详细产业链。' });
                         setTimeout(function () {
                             $(".l-dialog-close").trigger("click");
@@ -291,7 +284,13 @@
             return object;
         }
 
-        var resetData = function (vdata, vlinks,showLege) {
+        var resetData = function (productChainData) {
+        	var vdata = [];
+        	var vlinks = [];
+        	for(var i=0;i<productChainData.length;i++){
+        		
+        	}
+        	
             var option = {
                 backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
                     offset: 0,
@@ -312,7 +311,7 @@
                 animationEasingUpdate: 'linear',
                 legend: {
                     x: "center",
-                    show: showLege,
+                    show: false,
                     data: getLevelObject(0)
                 },
                 toolbox: {
@@ -370,7 +369,7 @@
                                 if (!node.value) {
                                     return node.data.name;
                                 } else {
-                                    return node.data.name + (node.data.showNum == null ? "" : (":" + node.data.showNum));
+                                    return node.data.name + (node.data.code == null ? "" : (":" + node.data.code));
                                 }
                             },
                         },
@@ -407,20 +406,19 @@
         }
 
         var reloadComp = function () {
-            var jsonData = { "key": currKey.id };
+            var ajaxPara = { "productCode": currKey.id };
             $.ajax({
-                url: "../service/DataService.asmx/GetCompanyStr",
+                url: "../demo/getCompanysByProduct",
                 type: "post",
                 asnyc: false,
-                data: JSON.stringify(jsonData),
+                data: ajaxPara,
                 dataType: "json",
-                contentType: "application/json",
                 success: function (result) {
-                    if (result.d != null && result.d != "-1") {
-                        compJsonData = JSON.parse(result.d);
+                    if (result != null && result.retCode == "000") {
+                        compJsonData.Rows = result.data;
                         compGrid = $("#comp").ligerGrid({
                             height: "240px", width: "200px",
-                            columns: compCol, data: $.extend(true, {}, compJsonData), enabledSort: false,
+                            columns: compCol, data:compJsonData, enabledSort: false,
                             pageSize: 50, isScroll: true, onSelectRow: openComp
                         });
                     } else {
@@ -431,7 +429,7 @@
         }
 
         var openComp = function (r, x, d) {
-            sessionStorage.setItem("compname", r.mc);
+            sessionStorage.setItem("compname", r.securityName);
             window.open("CompanyProductChart.html");
         }
     </script>

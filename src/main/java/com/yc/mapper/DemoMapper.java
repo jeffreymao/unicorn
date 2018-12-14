@@ -2,6 +2,7 @@ package com.yc.mapper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Result;
@@ -13,7 +14,7 @@ public interface DemoMapper {
 	@Select("select distinct ca.security_code,ca.security_name,ca.co_code \n" + 
 			"from company_product_series cps,company_attribute ca\n" + 
 			"where  ca.id_state = 1 and cps.id_state = 1\n" + 
-			"and  cps.co_code = ca.co_code")
+			"and  cps.co_code = ca.co_code limit 200")
 	@Results({
 		@Result(property = "securityCode",  column = "security_code"),
 		@Result(property = "securityName",  column = "security_name"),
@@ -46,7 +47,7 @@ public interface DemoMapper {
 	@Select("select sd.data_time ,sd.data_value\n" + 
 			"from series_data sd\n" + 
 			"where sd.series_code = #{seriesCode}\n" + 
-			"order by sd.data_time")
+			"order by sd.data_time desc limit 50")
 	@Results({
 		@Result(property = "seriesDataTime",  column = "data_time"),
 		@Result(property = "seriesDataValue",  column = "data_value"),
@@ -62,13 +63,14 @@ public interface DemoMapper {
 	})
 	List<Map<String,Object>> getProductChain(String productCode);
 	
-	@Select("select distinct ca.co_code ,ca.co_name\n" + 
+	@Select("select distinct ca.security_code,ca.security_name,ca.co_code\n" + 
 			"from company_attribute ca,company_product_series cps\n" + 
 			"where cps.id_state = 1 and ca.id_state = 1 and ca.co_code = cps.co_code\n" + 
 			"and cps.product_code = #{productCode}")
 	@Results({
+		@Result(property = "securityCode",  column = "security_code"),
+		@Result(property = "securityName",  column = "security_name"),
 		@Result(property = "coCode",  column = "co_code"),
-		@Result(property = "coName",  column = "co_name"),
 	})
 	List<Map<String,Object>> getCompanysByProduct(String productCode);
 	
@@ -81,6 +83,18 @@ public interface DemoMapper {
 		@Result(property = "productName",  column = "product_name"),
 	})
 	List<Map<String,Object>> getCoreProducts();
+	
+	@Select("<script>"
+			               + "SELECT product_code, product_name FROM product_attribute  where product_code IN "
+			               + "<foreach item='item' index='index' collection='codeList' open='(' separator=',' close=')'>"
+			                  + "#{item}"
+			               + "</foreach>"
+			           + "</script>")
+	@Results({
+		@Result(property = "productCode",  column = "product_code"),
+		@Result(property = "productName",  column = "product_name"),
+	})
+	List<Map<String,Object>> getProductNameByCodes(@Param("codeList") Set<Long> codeList);
 	
 	
 }
