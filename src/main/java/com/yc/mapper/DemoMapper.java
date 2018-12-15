@@ -14,7 +14,7 @@ public interface DemoMapper {
 	@Select("select distinct ca.security_code,ca.security_name,ca.co_code \n" + 
 			"from company_product_series cps,company_attribute ca\n" + 
 			"where  ca.id_state = 1 and cps.id_state = 1\n" + 
-			"and  cps.co_code = ca.co_code limit 200")
+			"and  cps.co_code = ca.co_code")
 	@Results({
 		@Result(property = "securityCode",  column = "security_code"),
 		@Result(property = "securityName",  column = "security_name"),
