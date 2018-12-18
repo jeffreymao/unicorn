@@ -1,100 +1,43 @@
 ﻿<!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="utf-8">
-    <title>产品链图谱生成器</title>
-    <script src="../scripts/echarts-all-3.js"></script>
-    <script src="../scripts/jquery-3.2.1.min.js"></script>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <meta name=”viewport” content=”user-scalable=yes, initial-scale=1.0, maximum-scale=1.0, minimun-scale=1.0” />
+    <meta name="keywords" content="野尘,野尘智能,野尘智能科技,野尘智能投研平台,野尘舆情监控平台,野尘金融数据服务,上海野尘,上海野尘智能,上海野尘智能科技,上海野尘智能科技有限公司" />
+    <meta name="description" content="野尘智能是来自于平安科技、东方财富、恒生电子等金融科技大型企业的技术专家组成创业团队，我们的核心目标是为客户提供更好的产品与服务。我们认为严苛的底线控制是公司生存的基石，公开透明的交流是公司创新的源泉，开放共享的激励是公司发展的动力。"
+    />
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta name="robots" content="all,index,follow" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="format-detection" content="telephone=no,email=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="screen-orientation" content="portrait" />
+    <meta name="browsermode" content="application" />
+    <meta name="x5-fullscreen" content="true" />
+    <meta name="x5-page-mode" content="app" />
+    <meta name="full-screen" content="yes" />
+    <title>野尘智能 - AI改变金融，数据赋能投研</title>
+    <link href="../images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
     <link href="../scripts/Aqua/css/ligerui-all.css" rel="stylesheet" />
     <link href="../scripts/Gray2014/css/all.css" rel="stylesheet" />
+    <link href="../css/common.css" rel="stylesheet" type="text/css" />
+    <script src="../scripts/echarts-all-3.js"></script>
+    <script src="../scripts/jquery-3.2.1.min.js"></script>
     <script src="../scripts/ligerui.min.js"></script>
-    <link type="image/x-icon" href="../images/favcion.ico" rel="icon" />
-    <style type="text/css">
-        * {
-            margin: 0px;
-            padding: 0px;
-        }
-
-        #main {
-            width: 85%;
-            height: 100%;
-            float: right;
-        }
-
-        #left {
-            width: calc(15% - 7px);
-            border-right: 1px dashed #ccc;
-            height: 100%;
-            float: left;
-        }
-
-        #main, #left {
-            /*border-bottom: 1px dashed #ccc;
-            border-top: 1px dashed #ccc;*/
-            padding-top: 3px;
-            /*padding-left: 3px;*/
-        }
-
-        .btnClass {
-            width: calc(50% - 3px);
-            height: 25px;
-            margin-top: 3px;
-            cursor: pointer;
-        }
-
-        #txtKey {
-            height: 20px;
-            line-height: 20px;
-            width: calc(100% - 6px);
-        }
-
-        #loding {
-            position: absolute;
-            left: calc(15% - 7px + 35%);
-            top: 35%;
-            display: none;
-        }
-
-        #menu {
-            margin-top: 5px;
-            cursor: pointer;
-        }
-
-        .noselect {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        #container {
-            height: 600px;
-            overflow: hidden;
-            /*padding-top: 3px;*/
-            padding-left: 3px;
-            border-bottom: 1px dashed #ccc;
-        }
-
-        #comp {
-            position: absolute;
-            height: 250px;
-            width: 200px;
-            left: calc(15% + 3px);
-            bottom: -5px;
-            z-index: 999;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
     <div id="container">
         <div id="left">
-            <input type="text" id="txtKey" />
+            <input type="text" id="txtKey" class="putText" placeholder="查询内容..." />
             <input type="button" id="btnSearch" class="btnClass" value="查询" />
             <input type="button" id="btnClear" class="btnClass" value="清空" />
-            <input type="button" id="btnPrev" class="btnClass" value="← 上一个" />
-            <input type="button" id="btnNext" class="btnClass" value="下一个 →" />
+            <input type="button" id="btnPrev" class="btnClass" value="&#9668上一条" />
+            <input type="button" id="btnNext" class="btnClass" value="下一条&#9658" />
             <div id="menu" class="noselect" unselectable="on"></div>
         </div>
         <div id="comp" class="noselect" unselectable="on"></div>
@@ -102,10 +45,10 @@
     </div>
     <script type="text/javascript">
         var myChart;
-        var menuCol = [{ display: '代码', name: 'productCode', align: 'center', width: '35%' },
-                       { display: '名称', name: 'productName', align: 'center', width: '58%' }];
-        var compCol = [{ display: '公司代码', name: 'securityCode', align: 'center', width: '35%' },
-               { display: '公司名称', name: 'securityName', align: 'center', width: '65%' }];
+        var menuCol = [{ display: '代码', name: 'productCode', align: 'center', width: '50%' },
+            { display: '名称', name: 'productName', align: 'center', width: '50%' }];
+		var compCol = [{ display: '公司代码', name: 'securityCode', align: 'center', width: '35%' },
+		    { display: '公司名称', name: 'securityName', align: 'center', width: '65%' }];
         var jsonData = {};
         var compJsonData = {};
         var myGrid;
@@ -315,13 +258,13 @@
         	} 
         	
             var option = {
-                backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
-                    offset: 0,
-                    color: '#f7f8fa'
-                }, {
-                    offset: 1,
-                    color: '#cdd0d5'
-                }]),
+                //backgroundColor: new echarts.graphic.RadialGradient(0.3, 0.3, 0.8, [{
+                //    offset: 0,
+               //     color: '#f7f8fa'
+               // }, {
+               //     offset: 1,
+                //    color: '#cdd0d5'
+               // }]),
                 title: {
                     text: currKey.text,
                     textStyle: {
@@ -355,14 +298,15 @@
                         focusNodeAdjacency: true,
                         roam: true,
                         categories: getLevelObject(1),
-                        color: ['#F880C7', '#FF7E3A', '#F3E625', '#9FDA6C', '#697ED1', '#64B2C9', '#C4A6E4', '#65C995'],
+                        color: ['#1e90ff', '#95ec95', '#8acff8', '#d2691e', '#ff7474', '#9090ff', '#ffe390', '#ea92ff'],
+                        backgroundColor: 'rgba(19,34,122,0.05)',
                         label: {
                             normal: {
                                 show: true,
                                 textStyle: {
                                     fontSize: 13,
                                     //color: "#fff"
-                                    color: "black"
+                                    color: "#000"
                                 },
                                 formatter: function (para) {
                                     if (para.value == 1)
@@ -398,6 +342,7 @@
                         },
                         lineStyle: {
                             normal: {
+                            	color: 'rgba(19,34,122,0.5)',
                                 opacity: 1,
                                 width: 0.7,
                                 curveness: 0

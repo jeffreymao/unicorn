@@ -17,6 +17,7 @@ import com.yc.entity.UserEntity;
 import com.yc.mapper.UserMapper;
 
 @RestController
+@RequestMapping("/user")
 public class UserController {
 	
 	private static final Logger logger = LogManager.getLogger(UserController.class);
@@ -26,12 +27,6 @@ public class UserController {
 	
 //	@Autowired
 //	private RedisUtils redisUtils;
-	
-	@RequestMapping("/")
-	public String index() {
-		logger.info("enter index api :welcome ");
-		return "welocome to unicorn system";
-	}
 	
 	@RequestMapping("/getUsers")
 	@Cacheable(value="users")
